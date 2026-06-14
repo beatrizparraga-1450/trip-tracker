@@ -616,7 +616,105 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── Scrollbar ── */
+  /* ── Converter ── */
+  .converter-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+
+  .converter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .converter-amount {
+    flex: 1;
+    padding: 14px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 22px;
+    font-weight: 700;
+    font-family: var(--font);
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  .converter-amount:focus { border-color: var(--accent); }
+
+  .converter-currency {
+    padding: 14px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 700;
+    font-family: var(--font);
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  .converter-swap {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--accent);
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .converter-swap:hover { background: var(--accent); color: #fff; }
+
+  .converter-result {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.03em;
+    margin: 4px 0 2px;
+  }
+
+  .converter-rate {
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  .converter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .rate-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .rate-card-pair { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .rate-card-val { font-size: 18px; font-weight: 800; color: var(--text); }
+  .rate-card-sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+  .rates-updated { font-size: 11px; color: var(--dim); text-align: center; margin-top: 10px; }
+
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -680,6 +778,7 @@
     <div class="tabs">
       <button class="tab active" data-tab="expenses" onclick="showView('expenses')">Expenses</button>
       <button class="tab" data-tab="summary" onclick="showView('summary')">Summary</button>
+      <button class="tab" data-tab="converter" onclick="showView('converter')">Convert</button>
     </div>
   </div>
 
@@ -688,6 +787,7 @@
     <div id="view-expenses"></div>
     <div id="view-summary" style="display:none"></div>
     <div id="view-trips" style="display:none"></div>
+    <div id="view-converter" style="display:none"></div>
   </div>
 </div>
 
@@ -866,10 +966,12 @@ function render() {
   document.getElementById("view-expenses").style.display = currentView === "expenses" ? "block" : "none";
   document.getElementById("view-summary").style.display  = currentView === "summary"  ? "block" : "none";
   document.getElementById("view-trips").style.display    = currentView === "trips"    ? "block" : "none";
+  document.getElementById("view-converter").style.display = currentView === "converter" ? "block" : "none";
 
   if (currentView === "expenses") renderExpenses();
   if (currentView === "summary")  renderSummary();
   if (currentView === "trips")    renderTrips();
+  if (currentView === "converter") renderConverter();
 }
 
 function renderExpenses() {
@@ -1298,6 +1400,117 @@ function toast(msg) {
 function esc(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
+
+// ── Currency Converter ────────────────────────────────────────────────────────
+let fxRates = null;
+let fxUpdated = null;
+let fxFrom = "GBP";
+let fxTo = "EUR";
+let fxLoading = false;
+
+const CONV_CURRENCIES = ["GBP","EUR","USD","CHF"];
+const CURRENCY_FLAGS = { GBP: "🇬🇧", EUR: "🇪🇺", USD: "🇺🇸", CHF: "🇨🇭" };
+
+async function fetchRates() {
+  if (fxRates && fxUpdated && (Date.now() - fxUpdated) < 3600000) return; // cache 1hr
+  fxLoading = true;
+  try {
+    // Using open.er-api.com — free, no key needed
+    const res = await fetch("https://open.er-api.com/v6/latest/EUR");
+    const data = await res.json();
+    if (data.result === "success") {
+      fxRates = data.rates;
+      fxUpdated = Date.now();
+    }
+  } catch(e) {
+    console.error("Rate fetch failed", e);
+  }
+  fxLoading = false;
+}
+
+function convertAmount(amount, from, to) {
+  if (!fxRates) return null;
+  const inEur = amount / fxRates[from];
+  return inEur * fxRates[to];
+}
+
+async function renderConverter() {
+  const el = document.getElementById("view-converter");
+  el.innerHTML = `<div class="converter-card">
+    <div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px">Currency Converter</div>
+    <div style="font-size:13px;color:var(--muted);text-align:center;padding:20px 0" id="conv-loading">Fetching live rates…</div>
+  </div>`;
+
+  await fetchRates();
+
+  if (!fxRates) {
+    el.innerHTML = `<div class="converter-card">
+      <div class="empty"><div class="empty-icon">📡</div><div class="empty-title">Couldn't fetch rates</div><div class="empty-sub">Check your connection and <button onclick="renderConverter()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;font-family:var(--font)">try again</button></div></div>
+    </div>`;
+    return;
+  }
+
+  const fromOpts = CONV_CURRENCIES.map(c => `<option value="${c}" ${fxFrom===c?"selected":""}>${CURRENCY_FLAGS[c]} ${c}</option>`).join("");
+  const toOpts   = CONV_CURRENCIES.map(c => `<option value="${c}" ${fxTo===c?"selected":""}>${CURRENCY_FLAGS[c]} ${c}</option>`).join("");
+
+  const currentVal = document.getElementById("conv-input")?.value || "100";
+  const result = convertAmount(parseFloat(currentVal) || 0, fxFrom, fxTo);
+  const rate = convertAmount(1, fxFrom, fxTo);
+
+  el.innerHTML = `
+  <div class="converter-card">
+    <div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px">Currency Converter · Live Rates</div>
+    
+    <div class="converter-row">
+      <input class="converter-amount" id="conv-input" type="number" value="${currentVal}" min="0" step="0.01" oninput="updateConversion()">
+      <select class="converter-currency" id="conv-from" onchange="fxFrom=this.value;updateConversion()">${fromOpts}</select>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <button class="converter-swap" onclick="swapCurrencies()">⇅</button>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
+    <div style="margin-bottom:4px">
+      <div class="converter-result" id="conv-result">${result !== null ? fmt(result, fxTo) : "—"}</div>
+      <select class="converter-currency" id="conv-to" onchange="fxTo=this.value;updateConversion()" style="margin-top:8px">${toOpts}</select>
+    </div>
+
+    <div class="converter-rate" id="conv-rate">1 ${fxFrom} = ${rate?.toFixed(4)} ${fxTo}</div>
+  </div>
+
+  <div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">All rates vs EUR</div>
+  <div class="converter-grid">
+    ${CONV_CURRENCIES.filter(c => c !== "EUR").map(c => {
+      const r = convertAmount(1, "EUR", c);
+      const inv = convertAmount(1, c, "EUR");
+      return `<div class="rate-card">
+        <div class="rate-card-pair">EUR → ${c}</div>
+        <div class="rate-card-val">${CURRENCY_FLAGS[c]} ${r?.toFixed(4)}</div>
+        <div class="rate-card-sub">1 ${c} = €${inv?.toFixed(4)}</div>
+      </div>`;
+    }).join("")}
+  </div>
+  <div class="rates-updated">Rates updated: ${new Date(fxUpdated).toLocaleTimeString("en-GB", {hour:"2-digit",minute:"2-digit"})} · Source: open.er-api.com</div>`;
+}
+
+window.updateConversion = () => {
+  const val = parseFloat(document.getElementById("conv-input")?.value) || 0;
+  fxFrom = document.getElementById("conv-from")?.value || fxFrom;
+  fxTo   = document.getElementById("conv-to")?.value   || fxTo;
+  const result = convertAmount(val, fxFrom, fxTo);
+  const rate   = convertAmount(1, fxFrom, fxTo);
+  if (document.getElementById("conv-result")) {
+    document.getElementById("conv-result").textContent = result !== null ? fmt(result, fxTo) : "—";
+    document.getElementById("conv-rate").textContent = `1 ${fxFrom} = ${rate?.toFixed(4)} ${fxTo}`;
+  }
+};
+
+window.swapCurrencies = () => {
+  [fxFrom, fxTo] = [fxTo, fxFrom];
+  renderConverter();
+};
 </script>
 </body>
 </html>
