@@ -1278,12 +1278,17 @@ function expenseForm(initial, isEdit, onSave) {
     </div>
     <div class="btn-row">
       <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-      <button class="btn-primary" id="save-exp-btn" onclick="submitExpenseForm()">${isEdit ? "Save changes" : "Add expense"}</button>
+      <button class="btn-primary" id="save-exp-btn">${isEdit ? "Save changes" : "Add expense"}</button>
     </div>
   </div>`;
 
   // attach save fn after render via window
   window._onSaveExpense = onSave;
+  // Attach click via setTimeout to ensure DOM is ready
+  setTimeout(() => {
+    const btn = document.getElementById("save-exp-btn");
+    if (btn) btn.addEventListener("click", window.submitExpenseForm);
+  }, 50);
 }
 
 window.submitExpenseForm = () => {
@@ -1294,7 +1299,8 @@ window.submitExpenseForm = () => {
   const month = document.getElementById("f-month")?.value || "01";
   const year  = document.getElementById("f-year")?.value  || "2026";
   const date  = `${year}-${month}-${day}`;
-  window._onSaveExpense?.({
+  if (!window._onSaveExpense) { toast("Error: please close and try again"); return; }
+  window._onSaveExpense({
     desc,
     amount,
     currency: document.getElementById("f-currency")?.value || "EUR",
