@@ -1266,7 +1266,7 @@ function expenseForm(initial, isEdit, onSave) {
     </div>
     <div class="form-group">
       <label class="form-label">Date</label>
-      <input class="form-input" id="f-date" type="date" value="${initial.date || today()}">
+      <input class="form-input" id="f-date" type="date" value="${initial.date || today()}" max="2030-12-31">
     </div>
     <div class="form-group">
       <label class="form-label">Notes</label>
@@ -1286,13 +1286,16 @@ window.submitExpenseForm = () => {
   const desc = document.getElementById("f-desc")?.value?.trim();
   const amount = document.getElementById("f-amount")?.value;
   if (!desc || !amount) { toast("Please fill in description and amount"); return; }
+  // Fallback to today if date field empty (mobile Safari quirk)
+  const rawDate = document.getElementById("f-date")?.value;
+  const date = rawDate || today();
   window._onSaveExpense?.({
     desc,
     amount,
-    currency: document.getElementById("f-currency").value,
-    category: document.getElementById("f-category").value,
-    date: document.getElementById("f-date").value,
-    notes: document.getElementById("f-notes").value.trim(),
+    currency: document.getElementById("f-currency")?.value || "EUR",
+    category: document.getElementById("f-category")?.value || "other",
+    date,
+    notes: document.getElementById("f-notes")?.value?.trim() || "",
   });
 };
 
