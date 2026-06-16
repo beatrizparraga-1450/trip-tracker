@@ -60,7 +60,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 /* TABS */
 .tabs{display:flex;gap:4px;padding-bottom:14px}
-.tab{flex:1;padding:8px 0;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid #3E3430;background:transparent;color:#9A7E6F;font-family:var(--font)}
+.tab{flex:1;padding:7px 0;border-radius:9px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid #3E3430;background:transparent;color:#9A7E6F;font-family:var(--font)}
 .tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
 /* CONTENT */
@@ -244,6 +244,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="tabs">
       <button class="tab active" id="tab-expenses">Expenses</button>
       <button class="tab" id="tab-summary">Summary</button>
+      <button class="tab" id="tab-itin">Itinerary</button>
       <button class="tab" id="tab-pack">Packing</button>
       <button class="tab" id="tab-notes">Notes</button>
       <button class="tab" id="tab-convert">Convert</button>
@@ -253,6 +254,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div id="view-expenses"></div>
     <div id="view-summary" style="display:none"></div>
     <div id="view-trips" style="display:none"></div>
+    <div id="view-itin" style="display:none"></div>
     <div id="view-pack" style="display:none"></div>
     <div id="view-notes" style="display:none"></div>
     <div id="view-convert" style="display:none"></div>
@@ -416,7 +418,7 @@ function render(){
     document.getElementById('b-caption').textContent = 'Budget: '+fmt(budget,trip.currency);
   } else { bsec.style.display='none'; }
 
-  ['expenses','summary','pack','notes','convert'].forEach(function(v){
+  ['expenses','summary','itin','pack','notes','convert'].forEach(function(v){
     document.getElementById('tab-'+v).classList.toggle('active', v===currentView);
     document.getElementById('view-'+v).style.display = v===currentView ? 'block' : 'none';
   });
@@ -425,6 +427,7 @@ function render(){
   if(currentView==='expenses') renderExpenses();
   if(currentView==='summary')  renderSummary();
   if(currentView==='trips')    renderTrips();
+  if(currentView==='itin')     renderItinerary();
   if(currentView==='pack')     renderPacking();
   if(currentView==='notes')    renderNotes();
   if(currentView==='convert')  renderConverter();
@@ -624,11 +627,254 @@ function convertAmt(amount,from,to){
 // ── Tab buttons ───────────────────────────────────────────────────────────────
 document.getElementById('tab-expenses').addEventListener('click',function(){ currentView='expenses'; render(); });
 document.getElementById('tab-summary').addEventListener('click',function(){ currentView='summary'; render(); });
+document.getElementById('tab-itin').addEventListener('click',function(){ currentView='itin'; render(); });
 document.getElementById('tab-pack').addEventListener('click',function(){ currentView='pack'; render(); });
 document.getElementById('tab-notes').addEventListener('click',function(){ currentView='notes'; render(); });
 document.getElementById('tab-convert').addEventListener('click',function(){ currentView='convert'; render(); });
 document.getElementById('trip-switcher-btn').addEventListener('click',function(){ currentView='trips'; render(); });
 document.getElementById('add-expense-btn').addEventListener('click',function(){ openAddExpense(); });
+
+// ── Itinerary ─────────────────────────────────────────────────────────────────
+var itinDay = 0; // 0=essentials, 1-9=days
+
+var ITIN_DAYS = [
+  { label:'Essentials', short:'Info', date:'' },
+  { label:'20 Jun · Arrival', short:'20 Jun', date:'Saturday' },
+  { label:'Day 1 · 21 Jun', short:'Day 1', date:'Sunday' },
+  { label:'Day 2 · 22 Jun', short:'Day 2', date:'Monday' },
+  { label:'Day 3 · 23 Jun', short:'Day 3', date:'Tuesday' },
+  { label:'Day 4 · 24 Jun', short:'Day 4', date:'Wednesday' },
+  { label:'Day 5 · 25 Jun', short:'Day 5', date:'Thursday' },
+  { label:'Day 6 · 26 Jun', short:'Day 6', date:'Friday' },
+  { label:'Day 7 · 27 Jun', short:'Day 7', date:'Saturday' },
+  { label:'Day 8 · 28 Jun', short:'Day 8', date:'Sunday' },
+  { label:'Day 9 · 29 Jun', short:'Day 9', date:'Monday' },
+];
+
+var ITIN_DATA = [
+  // 0: Essentials
+  { sections: [
+    { title:'✈️ Flights', items:[
+      { type:'info', text:'<strong>Outbound:</strong> London Luton → Venice Marco Polo<br>19 Jun 2026 · Departs 20:50 · Lands 20 Jun 00:05' },
+      { type:'info', text:'<strong>Return:</strong> Venice Marco Polo → London Luton<br>30 Jun 2026 · Departs 19:00 · Lands 20:15' },
+    ]},
+    { title:'🏨 Accommodation', items:[
+      { type:'info', text:'<strong>Hotel Eden</strong> · 19–20 Jun (Arrival night)<br>Viale Vittorio Emanuele 14, 38056 Levico Terme' },
+      { type:'info', text:'<strong>Apartments Mitterstill</strong> · 20–23 Jun (Days 1–3)<br>Am Ochsenbühel 16, 39050 Fiè allo Sciliar' },
+      { type:'info', text:'<strong>Benvenuti Apartments – LI CRODI</strong> · 23–26 Jun (Days 4–6)<br>Via Risorgimento 1, Dosoledo, Comelico Superiore' },
+      { type:'info', text:'<strong>Dolomites Charme Chalet</strong> · 26–30 Jun (Days 7–9)<br>Via Pezzei 7, 32020 Colle Santa Lucia BL' },
+    ]},
+    { title:'🚁 Drone Rules', items:[
+      { type:'ok', text:'<strong>LEGAL TO FLY:</strong> Passo Sella · Gran Cir · Giau Pass · Ra Gusela · Cinque Torri · Falzarego · Croda Negra · Monte Cernera · Coldai · Col de la Puina · Alleghe' },
+      { type:'warn', text:'<strong>BANNED (€3,000 fine):</strong> Tre Cime · Lago di Braies · Cadini di Misurina · Val di Funes · Santa Maddalena · Seceda · Alpe di Siusi · Lake Sorapis' },
+      { type:'info', text:'Register on D-Flight (d-flight.it) before leaving the UK — €7/year. Check the app every morning before flying.' },
+      { type:'info', text:'Keep drone below 120m AGL · Visual line of sight at all times · Best windows: 06:00–08:30 and 18:30–20:30' },
+    ]},
+    { title:'📞 Useful Contacts & Apps', items:[
+      { type:'info', text:'Mountain weather: meteo.fvg.it or Meteoblue' },
+      { type:'info', text:'Drone airspace: D-Flight app · d-flight.it' },
+      { type:'info', text:'Trails offline: Komoot or AllTrails — download before leaving the UK' },
+      { type:'info', text:'Emergency: 118 (mountain rescue) · 112 (European emergency)' },
+      { type:'info', text:'Cash: Carry €100–150 — rifugios and cable cars are cash only' },
+    ]},
+    { title:'✅ Book Before You Leave', items:[
+      { type:'warn', text:'Hotel Eden late check-in — confirm arrival at ~02:00 on 20 Jun' },
+      { type:'warn', text:'Lago di Braies parking → braies.it (URGENT — sells out weeks ahead)' },
+      { type:'warn', text:'Seceda cable car → funivie.org/en/ortisei — mandatory timed slot 2026' },
+      { type:'warn', text:'Tre Cime toll road: 02:00 AM slot booked for 26 Jun at pass.auronzo.info — add rental car plate day before' },
+      { type:'warn', text:'D-Flight registration → d-flight.it (€7/year Base plan)' },
+      { type:'warn', text:'Drone insurance — confirm UK policy covers Italy (min. €920,000 liability)' },
+    ]},
+  ]},
+
+  // 1: 20 Jun Arrival
+  { subtitle:'Arrival Day · Hotel Eden → Fiè allo Sciliar', sections:[
+    { title:'', items:[
+      { time:'00:05', text:'Land Venice Marco Polo · collect rental car. Allow 45–60 min for disembarkation, passport control, car collection. Add Italian licence plate to Tre Cime booking.', parking:'Drive to Levico Terme (~1hr 45min motorway)' },
+      { time:'~02:00', text:'Arrive Hotel Eden · check in · sleep immediately.', parking:'Hotel Eden, Viale Vittorio Emanuele 14, Levico Terme' },
+      { time:'09:00', text:'Wake · breakfast at Hotel Eden. Sleep 7hrs minimum. Pack the car fully after breakfast — everything for 10 nights.', parking:'Check out by hotel\'s stated time' },
+      { time:'11:00', text:'Drive north toward Fiè allo Sciliar (~1hr 45min via A22 motorway toward Bolzano).' },
+      { time:'12:30', text:'Optional stop: Karersee (Lago di Carezza). 15-min detour off main road — short lake loop (30min). Your first proper Dolomites moment: turquoise water, Latemar peaks reflected.', photo:'First lake reflection of the trip — calm flat walk, no effort required', parking:'Pay car park at the lake — €3/hr' },
+      { time:'14:00', text:'Check in: Apartments Mitterstill, Am Ochsenbühel 16, Fiè allo Sciliar. Settle in, unpack properly — home for three nights.', parking:'Apartment parking included' },
+      { time:'15:30', text:'Groceries · get your bearings. Stock up for tomorrow\'s 05:45 dawn start: packed breakfast, packed lunch, snacks. Walk around the village.' },
+      { time:'20:00', text:'Charge everything · early night. Charge all camera batteries, drone batteries, power banks. Tomorrow starts before 06:00.', photo:'Alpenglow on the Schlern from the apartment terrace — if still awake at 20:30' },
+    ]},
+  ]},
+
+  // 2: Day 1
+  { subtitle:'Alpe di Siusi · Gran Cir · Passo Sella', sections:[
+    { title:'', items:[
+      { time:'05:50', text:'Pack car · drive to Compatsch gate. Barrier on Via S. Valentino opens at exactly 06:00 — aim to be first through.', parking:'Compatsch P2 car park — €30/day. Pre-book at zufahrt-seiseralm.it. Payment booth opens 08:00 — if you arrive before, pay on exit.' },
+      { time:'06:15', drone:'no', text:'Alpe di Siusi — dawn walk to Adler Lodge viewpoint. Follow broad trail west from Compatsch P2 (45–55min). Almost entirely alone at this hour. Sassolungo and Sassopiatto towers catch first light — meadows still in blue shadow below.', photo:'BEST LIGHT — dawn on Sassolungo from the meadow, near-solitude before 08:30' },
+      { time:'09:00', drone:'yes', text:'Drive to Gardena Pass · Gran Cir summit hike. 35min drive to Passo Gardena (2,121m). Follow signs to Rifugio Jimmy then Gran Cir. 2hr return, 350m gain to 2,592m. One short fixed-cable section near the top — no harness needed, solid boots fine.', photo:'Sella Group behind you, Val Gardena below — two completely different images', parking:'Free parking at Passo Gardena' },
+      { time:'12:00', text:'Picnic lunch at the pass · rest legs for 30min.' },
+      { time:'13:00', drone:'yes', text:'Drive to Passo Sella (15min). Sella Group towers on one side, Sassolungo on the other. Walk 15–20min for cleanest unobstructed view. Priority drone location — outside all park boundaries at altitude.', photo:'East face of Sassolungo — a different angle from your dawn view', parking:'Free parking at Passo Sella' },
+      { time:'15:00', text:'Drive home via Ortisei · groceries. Back at apartment by 16:00. Pack bags tonight — tomorrow also starts early.' },
+      { time:'20:00', drone:'yes', text:'Sunset — Schlern alpenglow from the apartment terrace. No driving. Set up the tripod.', photo:'BEST LIGHT — alpenglow on Schlern, warm orange at dusk' },
+    ]},
+  ]},
+
+  // 3: Day 2
+  { subtitle:'Seceda · Church of St John · Adolf-Munkel-Weg', sections:[
+    { title:'', items:[
+      { time:'07:30', drone:'no', text:'Drive to Ortisei · Seceda cable car. 20min drive. TWO cable car stages: Ortisei → Furnes → Seceda (2,519m). Pre-booked timed slot mandatory — book at funivie.org/en/ortisei. Ticket: €74pp return (€148 total).', photo:'BEST LIGHT — Odle ridgeline from the full 2,519m summit station in morning light', parking:'Garage Central or Seceda station car park (paid). Walk or take La Curta pedestrian tunnel to cable car.' },
+      { time:'09:30', drone:'no', text:'Seceda ridgeline walk. Walk the Odle ridgeline from 2,519m — the highest and most dramatic version. Bring packed lunch and eat up here. Allow 2hrs on the ridge.', photo:'Look across to Alpe di Siusi from yesterday — you can see both locations from each other' },
+      { time:'12:00', text:'Drive to Val di Funes · Church of St John in Ranui. 35min drive. Park roadside near San Giovanni chapel. Mid-afternoon light is good here. 45min stop.', photo:'Telephoto compression of chapel against cliff face from the road below', parking:'Small roadside parking near San Giovanni — usually free at this hour' },
+      { time:'13:00', drone:'no', text:'Adolf-Munkel-Weg trail from Zannes. Trail 6 → trail 35 (Adolf Munkel Weg) → trail 36 return. 10km loop, 3–4hrs through ancient spruce forest below the Odle ridgeline.', photo:'Forest light shafts through spruce canopy — best in early afternoon', parking:'Zannes car park (Parcheggio Zanser Alm) — €6' },
+      { time:'17:30', text:'Return to apartment · PACK ALL BAGS TONIGHT. Tomorrow you drive straight from Santa Maddalena to Dosoledo — bags must be in the car. Charge all batteries. Set alarm for 05:15.' },
+      { time:'20:00', text:'Evening — alpenglow from the terrace. Last evening at Mitterstill.', photo:'Final alpenglow session from the terrace — last night here' },
+    ]},
+  ]},
+
+  // 4: Day 3
+  { subtitle:'Santa Maddalena sunrise · Transfer to Dosoledo', sections:[
+    { title:'', items:[
+      { time:'05:15', text:'Depart directly from apartment — bags already loaded. Drive to Val di Funes (35min). Arrive at Santa Maddalena car park by 06:00 to be at the viewpoint as first light hits the Odle peaks.', parking:'Santa Maddalena village car park — €4–6. Pay machine. Arrive before 06:30.' },
+      { time:'06:00', drone:'no', text:'Chiesa di Santa Maddalena — sunrise. Walk 20–25min uphill to the church through damp cattle meadows. €4pp entry gate to upper meadow. Sunrise ~05:30 — by 06:00 the first light catches the Odle towers while meadow is still in shadow. Stay through full golden hour (06:00–08:00).', photo:'BEST LIGHT — the definitive Dolomites sunrise. Tripod essential. Wide angle + telephoto both.' },
+      { time:'08:30', text:'Key drop · drive east directly from Val di Funes. Do not return to the apartment — bags are in the car, keys arranged for early drop. Drive directly east from Val di Funes to Dosoledo.' },
+      { time:'09:00', text:'Drive east to Dosoledo (~2hr drive via Brunico/Bruneck). Stop in Auronzo di Cadore for groceries on the way — stock up properly, Dosoledo is remote.', parking:'Benvenuti Apartments, Via Risorgimento 1, Dosoledo' },
+      { time:'12:30', text:'Check in · rest · early night. Cook a proper meal. Charge all batteries. Tomorrow is a 05:30 departure for Braies — the biggest dawn of the trip.' },
+    ]},
+  ]},
+
+  // 5: Day 4
+  { subtitle:'Lago di Braies · Lago di Misurina · Lago di Auronzo', sections:[
+    { title:'', items:[
+      { time:'05:30', drone:'no', text:'Drive to Lago di Braies (45min). Arriving at 06:15 means 1–1.5hrs before the car park fills and crowds arrive. The lake in that window is silent. Mist sometimes lifts off the water in June mornings.', photo:'BEST LIGHT — dawn mist on turquoise water, Seekofel reflection', parking:'PRE-BOOK parking at braies.it. P3 or P4 lots (~€15). If missed: park in Braies village (free) and walk 30min.' },
+      { time:'06:15', text:'Lake loop — clockwise at dawn. 3.8km loop, ~1hr walking. Go clockwise — the Seekofel peak reflection comes at the far bank and is the hero shot. Bring tripod for long exposures on still water.', photo:'Long exposure on still water — best 06:15–07:30 window' },
+      { time:'08:30', text:'Stay or explore above the lake. Clear morning: hike toward Rifugio Biella (3hr return, 700m gain) for aerial views. Or stay lakeside and wait for boat hire (from 10:00, €55/45min).', photo:'From above (Biella trail) — lake from height without a drone' },
+      { time:'13:00', text:'Lago di Misurina (optional). OPTIONAL — also appears on Day 5 after Sorapis, which is the better visit. If energy is good: 2.6km lakeside circuit, Sorapiss group reflection from south shore.', photo:'South shore for Sorapiss reflection — afternoon light good here', parking:'Lakeside parking — paid (€5–8)' },
+      { time:'15:30', text:'Lago di Auronzo (optional). 12km drive to Auronzo di Cadore town. Lake Santa Caterina is an artificial lake — pleasant walk, local atmosphere. Worth 45min if energy allows.', parking:'Town parking in Auronzo di Cadore' },
+      { time:'17:00', text:'Return to Dosoledo · rest. Early night. Tomorrow is the biggest day of the trip.' },
+    ]},
+  ]},
+
+  // 6: Day 5
+  { subtitle:'Lago di Sorapis · Lago di Misurina', sections:[
+    { title:'', items:[
+      { time:'06:30', drone:'no', text:'Depart for Sorapis trailhead · Passo Tre Croci (1hr drive via Cortina). Early start separates you from the masses on the fixed rope sections.', parking:'Lay-by on SR48 at Passo Tre Croci — free, limited spaces. Arrive by 07:30.' },
+      { time:'07:30', drone:'no', text:'Lago di Sorapis hike — trail CAI 215 from Passo Tre Croci, signed for Rifugio Vandelli. 8km return, 500m gain, allow 4.5–5hrs with camera gear. Narrow ledges with fixed ropes — be patient on exposed sections. The lake is a milky fluorescent turquoise from glacial rock flour.', photo:'Polarising filter reduces glare and saturates the colour dramatically' },
+      { time:'13:00', text:'Drive to Lago di Misurina (30min). Walk the 2.6km lakeside circuit — quiet by early afternoon. South shore gives best angle for Sorapiss group reflection.', photo:'Sorapiss group reflection from the south shore — afternoon light strong here', parking:'Lakeside parking at Misurina — paid (€5–8)' },
+      { time:'16:00', text:'Return to Dosoledo · PACK ALL BAGS. This is the last night at Dosoledo. Pack everything tonight — tomorrow you leave directly from Cadini di Misurina. Keys arranged for early drop. Set alarm for 04:30.' },
+    ]},
+  ]},
+
+  // 7: Day 6
+  { subtitle:'Cadini di Misurina · Tre Cime · Transfer to Colle Santa Lucia', sections:[
+    { title:'', items:[
+      { time:'04:30', text:'Depart Dosoledo directly — bags in car · key drop arranged. Drive 45min to the toll gate at Lago d\'Antorno.' },
+      { time:'05:00', drone:'no', text:'Through toll gate · drive up to Rifugio Auronzo. Pre-booked 02:00 AM slot valid until 14:00 — entering at 05:00 is within window. Both hikes start from the same car park.', parking:'Toll road: 02:00 AM slot at pass.auronzo.info — €40/car. Have reservation + rental car plate ready.' },
+      { time:'05:20', drone:'no', text:'Cadini di Misurina first — trail 117. Cross road from car park, follow trail 117 heading south. 3.2km return, 210m gain, allow 2hrs. At 05:30–06:00 you\'ll be near alone at the viewpoint. Go 3min above the main viewpoint for a cleaner frame.', photo:'Allow time at the viewpoint — set up properly, work multiple angles, wait for the light' },
+      { time:'07:20', drone:'no', text:'Tre Cime loop — anti-clockwise · trail 101 → 105. 10km loop, 400m gain, allow 4.5hrs. The north face reveal as you round the western side is the moment — stop, set up, be patient. Rifugio Locatelli below the north face: sit on the terrace, shoot the towers. Cash only at rifugios (€5–8).', photo:'North face reveal — stop and spend time here, this is the shot. Include people for scale.' },
+      { time:'12:00', text:'Exit toll road · drive to Colle Santa Lucia via Cortina (1hr 30min via Passo Giau). The Giau Pass road is one of the most beautiful drives in the Alps. Stop briefly — you will return at sunset.', parking:'Check in: Dolomites Charme Chalet, Via Pezzei 7, Colle Santa Lucia — your base for 4 nights' },
+      { time:'14:00', text:'Check in · rest · charge everything. You have been on your feet since 05:00.' },
+      { time:'19:00', drone:'yes', text:'Giau Pass & Ra Gusela — DRONE FLIGHT + SUNSET. Drive 10min to Passo Giau (2,233m) — completely outside all park boundaries. 360° Dolomites panorama, no restrictions. Walk to Ra Gusela pond for the classic reflection shot at sunset.', photo:'BEST LIGHT — Ra Gusela pond reflection at sunset. Tripod essential.', parking:'Free parking at the pass' },
+    ]},
+  ]},
+
+  // 8: Day 7
+  { subtitle:'Cinque Torri · Falzarego Pass · Croda Negra', sections:[
+    { title:'', items:[
+      { time:'06:30', drone:'yes', text:'Cinque Torri — early morning drone + camera (25min drive). Arrive before 07:00. Take short hike up (40min, ~300m) rather than chairlift — fly drone before chairlift starts and crowds arrive. Five towers from the air are extraordinary. Walk circuit for WWI trench photographs.', photo:'WWI trenches at ground level — historical + dramatic light', parking:'Small car park at chairlift base — arrive by 06:45' },
+      { time:'10:00', drone:'yes', text:'Falzarego Pass (15min drive). Walk the pass area, shoot the col from different angles. Lagazuoi cable car (€20pp) for elevated perspective if you want it.', photo:'Road switchbacks from above — classic Dolomites drone subject', parking:'Large free car park at the pass' },
+      { time:'11:30', drone:'yes', text:'Croda Negra via trail 441 from Falzarego Pass. Follow CAI trail 441 behind the Falzarego restaurant — well signed. Optional detour to Lago Limides (20min, worth it). Stop at the Croda Negra viewpoint — do not continue to Rifugio Nuvolau. 3–3.5hrs return, ~350m gain. Panorama: Giau Pass, Marmolada, Civetta, Pelmo all visible.', photo:'Giau Pass + Marmolada + Civetta from Croda Negra viewpoint — wide panoramic frame', parking:'Park at Passo Falzarego — large free car park. Trail 441 starts behind the restaurant.' },
+      { time:'16:30', drone:'yes', text:'Return · Giau Pass evening. Drive 10min from Falzarego to Passo Giau if skies are clear. Evening light on the pass. Quick drone flight or shoot Ra Gusela pond in different conditions.', photo:'BEST LIGHT — evening on the pass, different quality from sunset sessions', parking:'Free parking at the pass' },
+    ]},
+  ]},
+
+  // 9: Day 8
+  { subtitle:'Lago Coldai · Rifugio Palafavera · Col de la Puina', sections:[
+    { title:'', items:[
+      { time:'07:00', drone:'yes', text:'Drive to Rifugio Palafavera — park at the trailhead (35min drive via Val di Zoldo). Drive directly to Rifugio Palafavera (1,514m). No cable car needed.', parking:'Large car park at Rifugio Palafavera — €5–8. Rifugio at 1,514m on the Val di Zoldo road near Passo Staulanza.' },
+      { time:'07:45', drone:'yes', text:'Lago Coldai — hike from Palafavera. Trail 564 west → Malga Pioda (45min) → trail 556 steeply to Rifugio Sonino al Coldai (1hr) → Lago Coldai (15–20min). Total: 2.5hrs, 680m gain to 2,191m. The entire Civetta north face fills the horizon. Fly drone low over the lake surface.', photo:'Sit at Rifugio Coldai, eat, photograph the wall. Bring cash.' },
+      { time:'11:30', text:'Return to Rifugio Palafavera — lunch. Descend same trail (~1.5hr). Lunch at the rifugio — warm, welcoming. Rest legs before the afternoon drive and hike.' },
+      { time:'13:30', drone:'yes', text:'Col de la Puina — hidden summit + drone. 25min drive to trailhead near Borca di Cadore. 3.5hr return, 594m gain. The summit reveal of Pelmo and Civetta is sudden and spectacular. Near-solitude on the summit.', photo:'The summit reveal is sudden — camera out before you reach the top', parking:'Small free car park at trailhead near Borca di Cadore' },
+      { time:'18:30', text:'Return · rest. Two summits, no cable cars, Civetta from every angle. Cook in the chalet. Rest.' },
+    ]},
+  ]},
+
+  // 10: Day 9
+  { subtitle:'Monte Cernera sunrise · Giau Pass · Sottoguda · Alleghe', sections:[
+    { title:'', items:[
+      { time:'05:00', drone:'yes', text:'Monte Cernera — SUNRISE DRONE FLIGHT. Drive 10min to Passo Giau. Begin hiking immediately (trail starts from the pass). 1.5hr to summit (2,377m, 400m gain). Sunrise ~05:30 — aim to be near summit as first light hits Pelmo.', photo:'BEST LIGHT — strongest sunrise of the trip. Tripod for stills.', parking:'Free parking at Passo Giau' },
+      { time:'08:00', drone:'yes', text:'Giau Pass — Ra Gusela final visit. Descend back to the pass. Walk to Ra Gusela pond in morning light. Cooler, stiller, sometimes mist in the valley below. Different quality to the sunset version.', photo:'Pond reflection in still morning air' },
+      { time:'09:00', drone:'yes', text:'Lago delle Baste · trail 436 from Passo Giau. Follow trail 436 (Alta Via No.1) from the small church of San Giovanni Gualberto at the pass. Easy gradient across the Mondeval plateau, 180m gain, ~1hr 15min to the lake. 2.5hrs return. The lake sits at 2,359m with Monte Pelmo rising directly behind it.', photo:'Monte Pelmo reflection in still water — best when wind is low. Watch your footing near marshy shore.' },
+      { time:'11:30', text:'Pack, back up, breakfast at chalet. Charge and pack the drone. Back up all memory cards. This is your last chance for a full backup.' },
+      { time:'12:30', text:'Sottoguda Gorge Walk. 29 Jun is a Monday — arrive by 12:00 to beat the 12:30–14:00 peak. Flat walk through a narrow limestone canyon — cool, shadowed, sound of the river. 1.5hr return. Check access status before going.', photo:'Gorge photography — shoot the rock walls upward, look for light shafts', parking:'Car park at Sottoguda village — €5' },
+      { time:'16:30', drone:'yes', text:'Alleghe lakeside village (20min drive). Stroll the promenade of Lago di Alleghe. Civetta reflected in the lake in late afternoon. Gelato. Sit by the water. You have earned this completely.', photo:'BEST LIGHT — 16:00–18:00, Civetta reflection in the lake', parking:'Village parking — paid (€3–5)' },
+      { time:'19:00', text:'Return · final dinner · pack. Last night at the chalet. Dinner, final packing. Leave boots on the balcony one more time. 🏔️' },
+    ]},
+  ]},
+];
+
+function renderItinerary(){
+  var el = document.getElementById('view-itin');
+
+  // Day selector pills
+  var pillHtml = '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:12px;margin-bottom:4px;scrollbar-width:none">';
+  ITIN_DAYS.forEach(function(d,i){
+    var active = i===itinDay;
+    pillHtml += '<button style="flex-shrink:0;padding:6px 12px;border-radius:20px;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'var(--accent)':'var(--surface)')+';color:'+(active?'#fff':'var(--muted)')+';font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap" data-day="'+i+'">'+d.short+'</button>';
+  });
+  pillHtml += '</div>';
+
+  var data = ITIN_DATA[itinDay];
+  var dayInfo = ITIN_DAYS[itinDay];
+  var contentHtml = '';
+
+  if(dayInfo.date){
+    contentHtml += '<div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px">'+dayInfo.date+'</div>';
+  }
+  if(data.subtitle){
+    contentHtml += '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px;line-height:1.4">'+data.subtitle+'</div>';
+  }
+
+  data.sections.forEach(function(sec){
+    if(sec.title){
+      contentHtml += '<div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin:14px 0 8px">'+sec.title+'</div>';
+    }
+    sec.items.forEach(function(item){
+      if(item.type){
+        // Essentials style
+        var bg = item.type==='warn' ? 'rgba(196,154,60,0.10)' : item.type==='ok' ? 'rgba(122,158,126,0.10)' : 'var(--surface)';
+        var border = item.type==='warn' ? '1px solid rgba(196,154,60,0.3)' : item.type==='ok' ? '1px solid rgba(122,158,126,0.3)' : '1px solid var(--border)';
+        var icon = item.type==='warn' ? '⚠️' : item.type==='ok' ? '✅' : 'ℹ️';
+        contentHtml += '<div style="background:'+bg+';border:'+border+';border-radius:11px;padding:11px 13px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start">'
+          +'<span style="font-size:14px;flex-shrink:0;margin-top:1px">'+icon+'</span>'
+          +'<div style="font-size:13px;color:var(--text);line-height:1.55">'+item.text+'</div>'
+          +'</div>';
+      } else {
+        // Timed entry style
+        contentHtml += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:13px 14px;margin-bottom:9px;box-shadow:0 1px 3px rgba(30,26,24,0.05)">';
+        if(item.time){
+          contentHtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
+            +'<span style="font-size:13px;font-weight:800;color:var(--accent);min-width:44px">'+item.time+'</span>';
+          if(item.drone==='yes') contentHtml += '<span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;background:rgba(122,158,126,0.15);color:var(--green);border:1px solid rgba(122,158,126,0.3)">🚁 FLY</span>';
+          if(item.drone==='no')  contentHtml += '<span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;background:rgba(176,48,32,0.10);color:var(--red);border:1px solid rgba(176,48,32,0.2)">🚫 NO DRONE</span>';
+          contentHtml += '</div>';
+        }
+        contentHtml += '<div style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:'+(item.photo||item.parking?'8':'0')+'px">'+item.text+'</div>';
+        if(item.photo){
+          contentHtml += '<div style="font-size:12px;color:#9A5020;background:rgba(200,67,42,0.08);border-left:3px solid var(--accent);padding:6px 10px;border-radius:0 6px 6px 0;margin-bottom:'+(item.parking?'6':'0')+'px">📷 '+item.photo+'</div>';
+        }
+        if(item.parking){
+          contentHtml += '<div style="font-size:12px;color:var(--muted);background:var(--surface2);padding:6px 10px;border-radius:6px;margin-top:4px">🅿️ '+item.parking+'</div>';
+        }
+        contentHtml += '</div>';
+      }
+    });
+  });
+
+  el.innerHTML = pillHtml + contentHtml;
+
+  // Day pill click handlers
+  el.querySelectorAll('[data-day]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      itinDay = parseInt(this.getAttribute('data-day'));
+      renderItinerary();
+    });
+  });
+}
 
 // ── Notes ─────────────────────────────────────────────────────────────────────
 function notesCol(){ return tripsCol().doc(activeTripId).collection('notes'); }
