@@ -2,788 +2,217 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Trip Cost Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colour Palette Preview</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#111318;--surface:#1c1f26;--surface2:#252830;--border:#2e3139;
-  --text:#f0f0f0;--muted:#888;--dim:#555;
-  --accent:#5b8dee;--accent-bg:rgba(91,141,238,0.12);
-  --green:#4caf82;--amber:#e6a817;--red:#e05555;
-  --font:-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif
-}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #F5F0EB; padding: 24px; }
+  h1 { font-size: 22px; font-weight: 800; color: #1E1A18; margin-bottom: 4px; letter-spacing: -0.03em; }
+  .subtitle { font-size: 13px; color: #9A7E6F; margin-bottom: 28px; }
 
-/* AUTH */
-#auth-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
-.auth-logo{font-size:56px;margin-bottom:20px}
-.auth-title{font-size:28px;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px}
-.auth-sub{font-size:14px;color:var(--muted);margin-bottom:40px;line-height:1.6}
-.google-btn{display:flex;align-items:center;gap:12px;background:#fff;color:#1a1a1a;border:none;border-radius:14px;padding:16px 28px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 2px 16px rgba(0,0,0,0.35);font-family:var(--font)}
-.google-btn:active{opacity:0.85}
+  /* SWATCHES */
+  .swatches { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 32px; }
+  .swatch { border-radius: 16px; padding: 20px 16px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 110px; }
+  .swatch-name { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .swatch-hex  { font-size: 11px; opacity: 0.7; }
 
-/* LOADING */
-#loading{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
-.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+  /* MOCK UI */
+  .mock { background: #F5F0EB; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(30,26,24,0.12); margin-bottom: 28px; }
+  .mock-header { background: #1E1A18; padding: 16px; }
+  .mock-trip-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .mock-trip-btn { flex: 1; background: #2E2824; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+  .mock-trip-name { font-size: 14px; font-weight: 700; color: #F5F0EB; }
+  .mock-trip-dest { font-size: 11px; color: #9A7E6F; }
+  .mock-add { background: #C8432A; border-radius: 10px; padding: 10px 16px; font-size: 13px; font-weight: 700; color: #fff; }
+  .mock-budget-row { display: flex; justify-content: space-between; font-size: 12px; color: #9A7E6F; margin-bottom: 6px; }
+  .mock-budget-row strong { color: #F5F0EB; }
+  .mock-track { background: #2E2824; border-radius: 6px; height: 6px; margin-bottom: 4px; overflow: hidden; }
+  .mock-fill { height: 100%; border-radius: 6px; background: #7A9E7E; width: 38%; }
+  .mock-tabs { display: flex; gap: 4px; padding-top: 12px; }
+  .mock-tab { flex: 1; padding: 7px 0; border-radius: 8px; font-size: 11px; font-weight: 600; text-align: center; border: 1px solid #2E2824; color: #9A7E6F; }
+  .mock-tab.active { background: #C8432A; border-color: #C8432A; color: #fff; }
 
-/* APP */
-#app{display:none;max-width:540px;margin:0 auto;padding-bottom:24px}
+  .mock-body { padding: 14px; }
+  .mock-date { font-size: 10px; font-weight: 700; color: #9A7E6F; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .mock-card { background: #fff; border: 1px solid #E8D5C0; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .mock-card-desc { font-size: 13px; font-weight: 600; color: #1E1A18; margin-bottom: 4px; }
+  .mock-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 600; background: #C8432A22; color: #C8432A; border: 1px solid #C8432A44; }
+  .mock-amount { font-size: 14px; font-weight: 800; color: #C8432A; }
+  .mock-card2 .mock-pill { background: #7A9E7E22; color: #7A9E7E; border-color: #7A9E7E44; }
+  .mock-card3 .mock-pill { background: #C49A3C22; color: #C49A3C; border-color: #C49A3C44; }
 
-/* USER BAR */
-.user-bar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:20}
-.user-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover}
-.user-name{font-size:13px;color:var(--muted);flex:1}
-.signout-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--muted);cursor:pointer;font-family:var(--font)}
+  /* NOTE CARD */
+  .mock-note { background: #FFF8F4; border: 1px solid #E8D5C0; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; border-left: 3px solid #C8432A; }
+  .mock-note-title { font-size: 13px; font-weight: 700; color: #1E1A18; margin-bottom: 4px; }
+  .mock-note-body { font-size: 12px; color: #9A7E6F; line-height: 1.5; }
 
-/* HEADER */
-.header{padding:14px 16px 0;background:var(--bg);position:sticky;top:51px;z-index:19;border-bottom:1px solid var(--border)}
-.header-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.trip-btn{flex:1;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer;color:var(--text);font-family:var(--font);text-align:left}
-.trip-btn-emoji{font-size:22px}
-.trip-btn-name{font-weight:700;font-size:14px;flex:1}
-.trip-btn-dest{font-size:11px;color:var(--muted)}
-.trip-btn-arrow{color:var(--muted);font-size:12px}
-.add-btn{background:var(--accent);color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:var(--font)}
-.add-btn:active{opacity:0.85}
+  /* PACK ITEM */
+  .mock-pack { background: #fff; border: 1px solid #E8D5C0; border-radius: 11px; padding: 11px 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+  .mock-pack-cb { width: 18px; height: 18px; border-radius: 5px; border: 2px solid #E8D5C0; flex-shrink: 0; }
+  .mock-pack-cb.done { background: #7A9E7E; border-color: #7A9E7E; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: 800; }
+  .mock-pack-label { font-size: 13px; color: #1E1A18; }
+  .mock-pack.checked { opacity: 0.45; }
 
-/* BUDGET BAR */
-.budget-section{margin-bottom:12px}
-.budget-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
-.budget-labels strong{color:var(--text)}
-.progress-track{background:var(--surface2);border-radius:6px;height:7px;overflow:hidden}
-.progress-fill{height:100%;border-radius:6px;transition:width 0.4s}
-.budget-caption{font-size:11px;color:var(--dim);text-align:right;margin-top:4px}
+  /* SECTION TITLE */
+  .section-title { font-size: 13px; font-weight: 700; color: #1E1A18; margin-bottom: 14px; }
 
-/* TABS */
-.tabs{display:flex;gap:4px;padding-bottom:14px}
-.tab{flex:1;padding:8px 0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:var(--font)}
-.tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  /* PROGRESS */
+  .mock-progress { background: #fff; border: 1px solid #E8D5C0; border-radius: 12px; padding: 14px; margin-bottom: 8px; }
+  .mock-progress-top { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .mock-total { font-size: 28px; font-weight: 800; color: #C8432A; letter-spacing: -0.03em; }
+  .mock-total-label { font-size: 10px; color: #9A7E6F; text-transform: uppercase; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 4px; }
 
-/* CONTENT */
-.content{padding:14px 16px}
-
-/* EXPENSE CARDS */
-.date-label{font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;margin-top:4px}
-.expense-card{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.exp-left{flex:1;min-width:0}
-.exp-desc{font-weight:600;font-size:14px;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.exp-notes{font-size:12px;color:var(--dim);margin-top:4px}
-.exp-right{text-align:right;flex-shrink:0}
-.exp-amount{font-weight:700;font-size:15px;color:var(--accent)}
-.exp-actions{display:flex;gap:6px;margin-top:6px;justify-content:flex-end}
-.btn-edit{background:var(--surface2);border:none;border-radius:6px;padding:4px 10px;font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--font)}
-.btn-del{background:rgba(224,85,85,0.12);border:none;border-radius:6px;padding:4px 10px;font-size:11px;color:var(--red);cursor:pointer;font-family:var(--font)}
-.cat-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
-
-/* EMPTY */
-.empty{text-align:center;padding:56px 0;color:var(--dim)}
-.empty-icon{font-size:42px;margin-bottom:12px}
-.empty-title{font-size:16px;font-weight:600;color:var(--muted);margin-bottom:6px}
-.empty-sub{font-size:13px}
-.empty-sub strong{color:var(--accent)}
-
-/* SEARCH */
-.search-box{width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:var(--font);outline:none;margin-bottom:14px}
-.search-box:focus{border-color:var(--accent)}
-
-/* SUMMARY */
-.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
-.summary-label{font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px}
-.summary-amount{font-size:34px;font-weight:800;color:var(--accent);letter-spacing:-0.03em}
-.summary-count{font-size:12px;color:var(--dim);margin-top:4px}
-.cat-row{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px}
-.cat-row-top{display:flex;justify-content:space-between;margin-bottom:6px}
-.cat-row-name{font-weight:600;font-size:14px}
-.cat-row-amount{font-weight:700;font-size:14px}
-.cat-meta{font-size:11px;color:var(--dim);margin-top:3px}
-.section-label{font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px}
-
-/* TRIPS */
-.trip-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:14px}
-.trip-card.active{background:var(--accent-bg);border-color:rgba(91,141,238,0.4)}
-.trip-card-emoji{font-size:28px}
-.trip-card-name{font-weight:700;font-size:15px}
-.trip-card-dest{font-size:12px;color:var(--muted)}
-.trip-card-meta{font-size:12px;color:var(--dim);margin-top:2px}
-.trip-check{font-size:18px;color:var(--accent)}
-
-/* CONVERTER */
-.conv-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px}
-.conv-amount{width:100%;padding:14px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:24px;font-weight:700;font-family:var(--font);outline:none;margin-bottom:10px}
-.conv-amount:focus{border-color:var(--accent)}
-.conv-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.conv-select{flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-weight:700;font-family:var(--font);outline:none;cursor:pointer;appearance:none;text-align:center}
-.conv-swap{width:42px;height:42px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:50%;color:var(--accent);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--font)}
-.conv-result{font-size:32px;font-weight:800;color:var(--accent);letter-spacing:-0.03em;margin:6px 0 4px}
-.conv-rate{font-size:12px;color:var(--dim)}
-.rates-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.rate-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
-.rate-pair{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
-.rate-val{font-size:18px;font-weight:800}
-.rate-sub{font-size:11px;color:var(--dim);margin-top:2px}
-.rates-updated{font-size:11px;color:var(--dim);text-align:center;margin-top:10px}
-
-/* MODAL */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;backdrop-filter:blur(3px)}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px;width:100%;max-width:460px;max-height:88vh;overflow-y:auto}
-.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-.modal-title{font-weight:700;font-size:17px}
-.modal-close{background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;font-family:var(--font)}
-
-/* FORM */
-.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
-.fl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em}
-.fi,.fs{padding:11px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:var(--font);outline:none;width:100%}
-.fi:focus,.fs:focus{border-color:var(--accent)}
-.fs{appearance:none;cursor:pointer}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.frow3{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:6px}
-
-/* BUTTONS */
-.btn-row{display:flex;gap:10px;margin-top:6px}
-.btn-primary{flex:1;padding:13px 16px;background:var(--accent);border:none;border-radius:11px;color:#fff;font-weight:700;font-size:15px;cursor:pointer;font-family:var(--font)}
-.btn-primary:active{opacity:0.85}
-.btn-primary.red{background:var(--red)}
-.btn-secondary{padding:13px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--muted);font-weight:600;font-size:15px;cursor:pointer;font-family:var(--font)}
-.btn-block{width:100%;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;font-family:var(--font);margin-top:8px;text-align:center;display:block}
-.btn-block.red{background:rgba(224,85,85,0.08);border-color:rgba(224,85,85,0.25);color:var(--red)}
-
-/* EMOJI */
-.emoji-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.emoji-opt{font-size:22px;width:42px;height:42px;border-radius:8px;border:2px solid transparent;background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font)}
-.emoji-opt.sel{border-color:var(--accent);background:var(--accent-bg)}
-
-/* TOAST */
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;color:var(--text);box-shadow:0 4px 24px rgba(0,0,0,0.4);opacity:0;transition:all 0.22s;z-index:300;white-space:nowrap;pointer-events:none}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* CONVERTER */
+  .mock-conv { background: #fff; border: 1px solid #E8D5C0; border-radius: 12px; padding: 14px; }
+  .mock-conv-amount { font-size: 26px; font-weight: 800; color: #1E1A18; margin-bottom: 10px; }
+  .mock-conv-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .mock-conv-sel { flex: 1; background: #F5F0EB; border: 1px solid #E8D5C0; border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 700; color: #1E1A18; text-align: center; }
+  .mock-conv-swap { width: 34px; height: 34px; border-radius: 50%; background: #C8432A22; border: 1px solid #C8432A; color: #C8432A; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .mock-conv-result { font-size: 24px; font-weight: 800; color: #C8432A; }
+  .mock-conv-rate { font-size: 11px; color: #9A7E6F; }
 </style>
 </head>
 <body>
 
-<div id="loading">
-  <div class="spinner"></div>
-  <div style="font-size:13px;color:var(--muted)">Loading…</div>
-</div>
+<h1>Trip Tracker · Colour Palette</h1>
+<p class="subtitle">Warm terracotta, cream & earthy tones</p>
 
-<div id="auth-screen" style="display:none">
-  <div class="auth-logo">✈️</div>
-  <div class="auth-title">Trip Cost Tracker</div>
-  <div class="auth-sub">Track spending across all your trips.<br>Syncs across all your devices.</div>
-  <button class="google-btn" id="google-signin-btn">
-    <svg width="20" height="20" viewBox="0 0 24 24">
-      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-    </svg>
-    Continue with Google
-  </button>
-</div>
-
-<div id="app" style="display:none">
-  <div class="user-bar">
-    <img class="user-avatar" id="user-avatar" src="" alt="">
-    <span class="user-name" id="user-name"></span>
-    <button class="signout-btn" id="signout-btn">Sign out</button>
+<!-- SWATCHES -->
+<div class="swatches">
+  <div class="swatch" style="background:#C8432A;color:#fff">
+    <div class="swatch-name">Terracotta</div>
+    <div class="swatch-hex">#C8432A · Primary accent</div>
   </div>
-  <div class="header">
-    <div class="header-row">
-      <button class="trip-btn" id="trip-switcher-btn">
-        <span class="trip-btn-emoji" id="hdr-emoji">✈️</span>
+  <div class="swatch" style="background:#F5F0EB;color:#1E1A18;border:1px solid #E8D5C0">
+    <div class="swatch-name">Warm Cream</div>
+    <div class="swatch-hex">#F5F0EB · Background</div>
+  </div>
+  <div class="swatch" style="background:#1E1A18;color:#F5F0EB">
+    <div class="swatch-name">Deep Charcoal</div>
+    <div class="swatch-hex">#1E1A18 · Header & text</div>
+  </div>
+  <div class="swatch" style="background:#E8D5C0;color:#1E1A18">
+    <div class="swatch-name">Warm Sand</div>
+    <div class="swatch-hex">#E8D5C0 · Cards & borders</div>
+  </div>
+  <div class="swatch" style="background:#7A9E7E;color:#fff">
+    <div class="swatch-name">Sage Green</div>
+    <div class="swatch-hex">#7A9E7E · Success & budget</div>
+  </div>
+  <div class="swatch" style="background:#C49A3C;color:#fff">
+    <div class="swatch-name">Dusty Amber</div>
+    <div class="swatch-hex">#C49A3C · Warnings</div>
+  </div>
+  <div class="swatch" style="background:#9A7E6F;color:#fff">
+    <div class="swatch-name">Warm Taupe</div>
+    <div class="swatch-hex">#9A7E6F · Muted text</div>
+  </div>
+  <div class="swatch" style="background:#FFF8F4;color:#1E1A18;border:1px solid #E8D5C0">
+    <div class="swatch-name">Blush White</div>
+    <div class="swatch-hex">#FFF8F4 · Note cards</div>
+  </div>
+</div>
+
+<!-- MOCK APP -->
+<p class="section-title">How it looks in the app</p>
+
+<div class="mock">
+  <!-- Header -->
+  <div class="mock-header">
+    <div class="mock-trip-row">
+      <div class="mock-trip-btn">
+        <span style="font-size:20px">🏔️</span>
         <div>
-          <div class="trip-btn-name" id="hdr-name">Loading…</div>
-          <div class="trip-btn-dest" id="hdr-dest"></div>
+          <div class="mock-trip-name">Dolomites 2026</div>
+          <div class="mock-trip-dest">Italy · 19–30 Jun</div>
         </div>
-        <span class="trip-btn-arrow">▾</span>
-      </button>
-      <button class="add-btn" id="add-expense-btn">+ Add</button>
-    </div>
-    <div class="budget-section" id="budget-section" style="display:none">
-      <div class="budget-labels">
-        <span>Spent: <strong id="b-spent">—</strong></span>
-        <span id="b-remaining"></span>
+        <span style="color:#9A7E6F;font-size:11px;margin-left:auto">▾</span>
       </div>
-      <div class="progress-track"><div class="progress-fill" id="b-fill" style="width:0%"></div></div>
-      <div class="budget-caption" id="b-caption"></div>
+      <div class="mock-add">+ Add</div>
     </div>
-    <div class="tabs">
-      <button class="tab active" id="tab-expenses">Expenses</button>
-      <button class="tab" id="tab-summary">Summary</button>
-      <button class="tab" id="tab-convert">Convert</button>
+    <div class="mock-budget-row">
+      <span>Spent: <strong>€338.00</strong></span>
+      <span style="color:#7A9E7E">€1,162.00 left</span>
+    </div>
+    <div class="mock-track"><div class="mock-fill"></div></div>
+    <div style="font-size:10px;color:#9A7E6F;text-align:right;margin-top:3px">Budget: €2,000.00</div>
+    <div class="mock-tabs">
+      <div class="mock-tab active">Expenses</div>
+      <div class="mock-tab">Summary</div>
+      <div class="mock-tab">Packing</div>
+      <div class="mock-tab">Notes</div>
+      <div class="mock-tab">Convert</div>
     </div>
   </div>
-  <div class="content">
-    <div id="view-expenses"></div>
-    <div id="view-summary" style="display:none"></div>
-    <div id="view-trips" style="display:none"></div>
-    <div id="view-convert" style="display:none"></div>
+
+  <!-- Expenses body -->
+  <div class="mock-body">
+    <div class="mock-date">Thu 19 Jun</div>
+    <div class="mock-card">
+      <div>
+        <div class="mock-card-desc">Hotel Eden</div>
+        <span class="mock-pill">🏨 Accommodation</span>
+      </div>
+      <div class="mock-amount">€73.13</div>
+    </div>
+    <div class="mock-card mock-card2">
+      <div>
+        <div class="mock-card-desc">Tre Cime toll road</div>
+        <span class="mock-pill" style="background:#7A9E7E22;color:#7A9E7E;border-color:#7A9E7E44">🅿️ Tolls</span>
+      </div>
+      <div class="mock-amount">€30.00</div>
+    </div>
+    <div class="mock-card mock-card3">
+      <div>
+        <div class="mock-card-desc">Seceda cable car</div>
+        <span class="mock-pill" style="background:#C49A3C22;color:#C49A3C;border-color:#C49A3C44">🎒 Activities</span>
+      </div>
+      <div class="mock-amount">€74.00</div>
+    </div>
+
+    <!-- Note sample -->
+    <div style="margin-top:16px">
+      <div class="mock-date">Notes</div>
+      <div class="mock-note">
+        <div class="mock-note-title">📝 Day 1 — Alpe di Siusi sunrise</div>
+        <div class="mock-note-body">Arrived at gate at 05:45, was already a queue. Absolutely worth it — the light on the Sassolungo at 6am was unreal. Bring snacks!</div>
+      </div>
+    </div>
+
+    <!-- Packing sample -->
+    <div style="margin-top:16px">
+      <div class="mock-date">Packing · 38 / 46</div>
+      <div class="mock-pack checked">
+        <div class="mock-pack-cb done">✓</div>
+        <span class="mock-pack-label" style="text-decoration:line-through;color:#9A7E6F">Sun cream</span>
+      </div>
+      <div class="mock-pack">
+        <div class="mock-pack-cb"></div>
+        <span class="mock-pack-label">Hiking poles (Bastones)</span>
+      </div>
+      <div class="mock-pack">
+        <div class="mock-pack-cb"></div>
+        <span class="mock-pack-label">Thyroid tablets</span>
+      </div>
+    </div>
+
+    <!-- Converter sample -->
+    <div style="margin-top:16px">
+      <div class="mock-date">Converter</div>
+      <div class="mock-conv">
+        <div class="mock-conv-amount">100</div>
+        <div class="mock-conv-row">
+          <div class="mock-conv-sel">🇬🇧 GBP</div>
+          <div class="mock-conv-swap">⇅</div>
+          <div class="mock-conv-sel">🇪🇺 EUR</div>
+        </div>
+        <div class="mock-conv-result">€119.42</div>
+        <div class="mock-conv-rate">1 GBP = 1.1942 EUR</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<script>
-// ── Firebase init ─────────────────────────────────────────────────────────────
-firebase.initializeApp({
-  apiKey: "AIzaSyBLI4PHZX-2FWx5g2ycAqJOwomYZTyPwlU",
-  authDomain: "trips-tracker-bp.firebaseapp.com",
-  projectId: "trips-tracker-bp",
-  storageBucket: "trips-tracker-bp.firebasestorage.app",
-  messagingSenderId: "914667122810",
-  appId: "1:914667122810:web:3cd4ddc552af077ca58bc3"
-});
-var auth = firebase.auth();
-var db   = firebase.firestore();
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-var CATS = [
-  {id:"accommodation",label:"Accommodation",icon:"🏨",color:"#5b8dee"},
-  {id:"transport",    label:"Transport",    icon:"🚗",color:"#4caf82"},
-  {id:"food",         label:"Food & Drink", icon:"🍽️",color:"#e6a817"},
-  {id:"activities",   label:"Activities",   icon:"🎒",color:"#b85cbb"},
-  {id:"shopping",     label:"Shopping",     icon:"🛍️",color:"#e07535"},
-  {id:"toll",         label:"Tolls & Parking",icon:"🅿️",color:"#4caf82"},
-  {id:"health",       label:"Health",       icon:"💊",color:"#e05555"},
-  {id:"other",        label:"Other",        icon:"📌",color:"#888"},
-];
-var CURRENCIES = ["EUR","GBP","USD","CHF"];
-var EMOJIS = ["🏔️","🏖️","🌍","🗺️","✈️","🚂","🏕️","🌴","🎿","🚢","🏙️","🌺"];
-var FLAGS  = {EUR:"🇪🇺",GBP:"🇬🇧",USD:"🇺🇸",CHF:"🇨🇭"};
-
-// ── State ─────────────────────────────────────────────────────────────────────
-var currentUser = null;
-var trips = [];
-var activeTripId = null;
-var currentView = "expenses";
-var fxRates = null;
-var fxUpdated = null;
-var fxFrom = "GBP";
-var fxTo   = "EUR";
-
-function activeTrip(){ return trips.find(function(t){return t.id===activeTripId}) || trips[0]; }
-function expenses(){ return (activeTrip()||{expenses:[]}).expenses || []; }
-function uid(){ return Math.random().toString(36).slice(2)+Date.now().toString(36); }
-function today(){
-  var d = new Date();
-  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-}
-function pad(n){ return String(n).padStart(2,'0'); }
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function fmt(n,cur){
-  return new Intl.NumberFormat('en-GB',{style:'currency',currency:cur||'EUR',minimumFractionDigits:2}).format(n||0);
-}
-function getCat(id){ return CATS.find(function(c){return c.id===id})||CATS[7]; }
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
-function toast(msg){
-  var el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(function(){ el.classList.remove('show'); }, 2400);
-}
-
-// ── Auth ──────────────────────────────────────────────────────────────────────
-document.getElementById('google-signin-btn').addEventListener('click', function(){
-  var provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(function(e){
-    toast('Sign in failed: '+e.message);
-  });
-});
-
-document.getElementById('signout-btn').addEventListener('click', function(){
-  auth.signOut();
-});
-
-auth.onAuthStateChanged(function(user){
-  document.getElementById('loading').style.display = 'none';
-  if(user){
-    currentUser = user;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('user-avatar').src = user.photoURL||'';
-    document.getElementById('user-name').textContent = user.displayName||user.email;
-    loadTrips();
-  } else {
-    currentUser = null;
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
-  }
-});
-
-// ── Firestore helpers ─────────────────────────────────────────────────────────
-function tripsCol(){ return db.collection('users').doc(currentUser.uid).collection('trips'); }
-function expsCol(tid){ return tripsCol().doc(tid).collection('expenses'); }
-
-function loadTrips(){
-  tripsCol().onSnapshot(function(snap){
-    var promises = snap.docs.map(function(d){
-      return expsCol(d.id).get().then(function(esnap){
-        var exps = [];
-        esnap.forEach(function(e){ exps.push(Object.assign({id:e.id},e.data())); });
-        return Object.assign({id:d.id,expenses:exps},d.data());
-      });
-    });
-    Promise.all(promises).then(function(loaded){
-      trips = loaded.sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
-      if(trips.length===0){ seedDolomites(); return; }
-      if(!activeTripId||!trips.find(function(t){return t.id===activeTripId})){
-        activeTripId = trips[0] && trips[0].id;
-      }
-      render();
-    });
-  });
-}
-
-function seedDolomites(){
-  var id = uid();
-  tripsCol().doc(id).set({
-    name:'Dolomites 2026',destination:'Italy',
-    startDate:'2026-06-19',endDate:'2026-06-30',
-    currency:'EUR',budget:2000,emoji:'🏔️',createdAt:Date.now()
-  });
-}
-
-// ── Render ────────────────────────────────────────────────────────────────────
-function render(){
-  var trip = activeTrip();
-  if(!trip) return;
-
-  document.getElementById('hdr-emoji').textContent = trip.emoji||'✈️';
-  document.getElementById('hdr-name').textContent  = trip.name||'';
-  document.getElementById('hdr-dest').textContent  = trip.destination||'';
-
-  var exps   = expenses();
-  var spent  = exps.reduce(function(s,e){return s+(e.amount||0);},0);
-  var budget = trip.budget||0;
-  var bsec   = document.getElementById('budget-section');
-  if(budget>0){
-    bsec.style.display='block';
-    var pct = Math.min((spent/budget)*100,100);
-    var rem = budget-spent;
-    document.getElementById('b-spent').textContent = fmt(spent,trip.currency);
-    var rel = document.getElementById('b-remaining');
-    rel.textContent = rem<0 ? 'Over by '+fmt(Math.abs(rem),trip.currency) : fmt(rem,trip.currency)+' left';
-    rel.style.color = rem<0 ? 'var(--red)' : pct>85 ? 'var(--amber)' : 'var(--green)';
-    var fill = document.getElementById('b-fill');
-    fill.style.width = pct+'%';
-    fill.style.background = pct>90?'var(--red)':pct>75?'var(--amber)':'var(--accent)';
-    document.getElementById('b-caption').textContent = 'Budget: '+fmt(budget,trip.currency);
-  } else { bsec.style.display='none'; }
-
-  ['expenses','summary','convert'].forEach(function(v){
-    document.getElementById('tab-'+v).classList.toggle('active', v===currentView);
-    document.getElementById('view-'+(v==='convert'?'convert':v)).style.display =
-      v===currentView ? 'block' : 'none';
-  });
-  document.getElementById('view-trips').style.display = currentView==='trips'?'block':'none';
-
-  if(currentView==='expenses') renderExpenses();
-  if(currentView==='summary')  renderSummary();
-  if(currentView==='trips')    renderTrips();
-  if(currentView==='convert')  renderConverter();
-}
-
-// ── Expenses view ─────────────────────────────────────────────────────────────
-function renderExpenses(){
-  var el   = document.getElementById('view-expenses');
-  var exps = expenses();
-  var trip = activeTrip();
-  if(!exps.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">🧾</div><div class="empty-title">No expenses yet</div><div class="empty-sub">Tap <strong>+ Add</strong> to log your first one</div></div>';
-    return;
-  }
-  var search = (document.getElementById('search-box')||{value:''}).value.toLowerCase();
-  var filtered = exps
-    .filter(function(e){ return !search||(e.desc||'').toLowerCase().includes(search)||(e.notes||'').toLowerCase().includes(search); })
-    .sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
-
-  var byDate = {};
-  filtered.forEach(function(e){
-    var d=e.date||'Unknown'; if(!byDate[d]) byDate[d]=[]; byDate[d].push(e);
-  });
-  var dates = Object.keys(byDate).sort(function(a,b){return b.localeCompare(a);});
-
-  var html = exps.length>2 ? '<input class="search-box" id="search-box" placeholder="Search expenses…" value="'+esc(search)+'">' : '';
-  dates.forEach(function(date){
-    var lbl = date!=='Unknown' ? new Date(date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}) : 'Unknown date';
-    html += '<div class="date-label">'+lbl+'</div>';
-    byDate[date].forEach(function(e){
-      var cat = getCat(e.category);
-      html += '<div class="expense-card">'
-        +'<div class="exp-left">'
-        +'<div class="exp-desc">'+esc(e.desc||'')+'</div>'
-        +'<span class="cat-pill" style="background:'+cat.color+'22;color:'+cat.color+';border:1px solid '+cat.color+'44">'+cat.icon+' '+cat.label+'</span>'
-        +(e.notes?'<div class="exp-notes">'+esc(e.notes)+'</div>':'')
-        +'</div>'
-        +'<div class="exp-right">'
-        +'<div class="exp-amount">'+fmt(e.amount,e.currency||trip.currency)+'</div>'
-        +'<div class="exp-actions">'
-        +'<button class="btn-edit" data-edit="'+e.id+'">Edit</button>'
-        +'<button class="btn-del" data-del="'+e.id+'">Del</button>'
-        +'</div></div></div>';
-    });
-  });
-  el.innerHTML = html;
-
-  // Search
-  var sb = document.getElementById('search-box');
-  if(sb) sb.addEventListener('input', function(){ renderExpenses(); });
-
-  // Edit / delete buttons via delegation
-  el.addEventListener('click', function(ev){
-    var editId = ev.target.getAttribute('data-edit');
-    var delId  = ev.target.getAttribute('data-del');
-    if(editId) openEditExpense(editId);
-    if(delId)  confirmDeleteExpense(delId);
-  },{once:true});
-}
-
-// ── Summary view ──────────────────────────────────────────────────────────────
-function renderSummary(){
-  var el   = document.getElementById('view-summary');
-  var exps = expenses();
-  var trip = activeTrip();
-  var spent= exps.reduce(function(s,e){return s+(e.amount||0);},0);
-  var html = '<div class="summary-card">'
-    +'<div class="summary-label">Total spent</div>'
-    +'<div class="summary-amount">'+fmt(spent,trip.currency)+'</div>'
-    +'<div class="summary-count">'+exps.length+' expense'+(exps.length!==1?'s':'')+'</div>';
-  if(trip.budget>0){
-    var pct=Math.min((spent/trip.budget)*100,100), rem=trip.budget-spent;
-    var col=pct>90?'var(--red)':pct>75?'var(--amber)':'var(--accent)';
-    html+='<div style="margin-top:14px">'
-      +'<div class="progress-track"><div class="progress-fill" style="width:'+pct+'%;background:'+col+'"></div></div>'
-      +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-top:5px">'
-      +'<span>Budget: '+fmt(trip.budget,trip.currency)+'</span>'
-      +'<span style="color:'+(rem<0?'var(--red)':'var(--green)')+'">'+
-        (rem<0?'Over by '+fmt(Math.abs(rem),trip.currency):fmt(rem,trip.currency)+' remaining')
-      +'</span></div></div>';
-  }
-  html+='</div>';
-  if(exps.length){
-    var byCat = CATS.map(function(c){
-      var items=exps.filter(function(e){return e.category===c.id;});
-      return Object.assign({},c,{total:items.reduce(function(s,e){return s+e.amount;},0),count:items.length});
-    }).filter(function(c){return c.count>0;}).sort(function(a,b){return b.total-a.total;});
-    html+='<div class="section-label">By category</div>';
-    byCat.forEach(function(c){
-      var pct=spent>0?(c.total/spent)*100:0;
-      html+='<div class="cat-row">'
-        +'<div class="cat-row-top"><span class="cat-row-name">'+c.icon+' '+c.label+'</span><span class="cat-row-amount" style="color:'+c.color+'">'+fmt(c.total,trip.currency)+'</span></div>'
-        +'<div class="progress-track"><div class="progress-fill" style="width:'+pct+'%;background:'+c.color+'"></div></div>'
-        +'<div class="cat-meta">'+pct.toFixed(0)+'% · '+c.count+' item'+(c.count!==1?'s':'')+'</div>'
-        +'</div>';
-    });
-  } else {
-    html+='<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Add expenses to see breakdown</div></div>';
-  }
-  html+='<button class="btn-block" id="edit-trip-btn">✏️ Edit trip details</button>';
-  html+='<button class="btn-block red" id="del-trip-btn">🗑️ Delete this trip</button>';
-  el.innerHTML=html;
-  document.getElementById('edit-trip-btn').addEventListener('click', openEditTrip);
-  document.getElementById('del-trip-btn').addEventListener('click', confirmDeleteTrip);
-}
-
-// ── Trips view ────────────────────────────────────────────────────────────────
-function renderTrips(){
-  var el=document.getElementById('view-trips');
-  var html='<div class="section-label">Your trips</div>';
-  trips.forEach(function(t){
-    var spent=(t.expenses||[]).reduce(function(s,e){return s+(e.amount||0);},0);
-    var isAct=t.id===activeTripId;
-    html+='<div class="trip-card'+(isAct?' active':'')+'" data-tid="'+t.id+'">'
-      +'<div class="trip-card-emoji">'+(t.emoji||'✈️')+'</div>'
-      +'<div style="flex:1">'
-      +'<div class="trip-card-name">'+esc(t.name)+'</div>'
-      +(t.destination?'<div class="trip-card-dest">'+esc(t.destination)+'</div>':'')
-      +'<div class="trip-card-meta">'+fmt(spent,t.currency)+' · '+(t.expenses||[]).length+' expense'+((t.expenses||[]).length!==1?'s':'')+'</div>'
-      +'</div>'
-      +(isAct?'<span class="trip-check">✓</span>':'')
-      +'</div>';
-  });
-  html+='<button class="btn-block" id="new-trip-btn">+ New trip</button>';
-  html+='<button class="btn-block" id="back-btn">Back</button>';
-  el.innerHTML=html;
-  el.addEventListener('click', function(ev){
-    var card=ev.target.closest('[data-tid]');
-    if(card){ activeTripId=card.getAttribute('data-tid'); currentView='expenses'; render(); }
-  });
-  document.getElementById('new-trip-btn').addEventListener('click', openAddTrip);
-  document.getElementById('back-btn').addEventListener('click', function(){ currentView='expenses'; render(); });
-}
-
-// ── Converter view ────────────────────────────────────────────────────────────
-function renderConverter(){
-  var el=document.getElementById('view-convert');
-  el.innerHTML='<div class="conv-card"><div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Fetching live rates…</div></div>';
-  fetchRates().then(function(){
-    if(!fxRates){ el.innerHTML='<div class="conv-card"><div class="empty"><div class="empty-icon">📡</div><div class="empty-title">Could not fetch rates</div><div class="empty-sub">Check your connection</div></div></div>'; return; }
-    var fromOpts=CURRENCIES.map(function(c){return '<option value="'+c+'"'+(fxFrom===c?' selected':'')+'>'+FLAGS[c]+' '+c+'</option>';}).join('');
-    var toOpts  =CURRENCIES.map(function(c){return '<option value="'+c+'"'+(fxTo===c?' selected':'')+'>'+FLAGS[c]+' '+c+'</option>';}).join('');
-    var res=convertAmt(100,fxFrom,fxTo);
-    var rate=convertAmt(1,fxFrom,fxTo);
-    el.innerHTML='<div class="conv-card">'
-      +'<div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">Live Currency Converter</div>'
-      +'<input class="conv-amount" id="conv-val" type="number" value="100" min="0" step="0.01">'
-      +'<div class="conv-row">'
-      +'<select class="conv-select" id="conv-from">'+fromOpts+'</select>'
-      +'<button class="conv-swap" id="conv-swap-btn">⇅</button>'
-      +'<select class="conv-select" id="conv-to">'+toOpts+'</select>'
-      +'</div>'
-      +'<div class="conv-result" id="conv-result">'+fmt(res,fxTo)+'</div>'
-      +'<div class="conv-rate" id="conv-rate">1 '+fxFrom+' = '+(rate?rate.toFixed(4):'—')+' '+fxTo+'</div>'
-      +'</div>'
-      +'<div class="section-label" style="margin-top:14px">All rates (base EUR)</div>'
-      +'<div class="rates-grid">'
-      +CURRENCIES.filter(function(c){return c!=='EUR';}).map(function(c){
-        var r=convertAmt(1,'EUR',c); var inv=convertAmt(1,c,'EUR');
-        return '<div class="rate-card"><div class="rate-pair">EUR → '+c+'</div><div class="rate-val">'+FLAGS[c]+' '+(r?r.toFixed(4):'—')+'</div><div class="rate-sub">1 '+c+' = €'+(inv?inv.toFixed(4):'—')+'</div></div>';
-      }).join('')
-      +'</div>'
-      +(fxUpdated?'<div class="rates-updated">Updated '+new Date(fxUpdated).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</div>':'');
-
-    document.getElementById('conv-val').addEventListener('input',updateConv);
-    document.getElementById('conv-from').addEventListener('change',function(){ fxFrom=this.value; updateConv(); });
-    document.getElementById('conv-to').addEventListener('change',function(){ fxTo=this.value; updateConv(); });
-    document.getElementById('conv-swap-btn').addEventListener('click',function(){
-      var tmp=fxFrom; fxFrom=fxTo; fxTo=tmp; renderConverter();
-    });
-  });
-}
-
-function updateConv(){
-  var val=parseFloat(document.getElementById('conv-val').value)||0;
-  fxFrom=document.getElementById('conv-from').value;
-  fxTo=document.getElementById('conv-to').value;
-  var res=convertAmt(val,fxFrom,fxTo);
-  var rate=convertAmt(1,fxFrom,fxTo);
-  document.getElementById('conv-result').textContent=fmt(res,fxTo);
-  document.getElementById('conv-rate').textContent='1 '+fxFrom+' = '+(rate?rate.toFixed(4):'—')+' '+fxTo;
-}
-
-function fetchRates(){
-  if(fxRates&&fxUpdated&&(Date.now()-fxUpdated)<3600000) return Promise.resolve();
-  return fetch('https://open.er-api.com/v6/latest/EUR')
-    .then(function(r){return r.json();})
-    .then(function(d){ if(d.result==='success'){fxRates=d.rates;fxUpdated=Date.now();} })
-    .catch(function(){});
-}
-
-function convertAmt(amount,from,to){
-  if(!fxRates) return null;
-  return (amount/fxRates[from])*fxRates[to];
-}
-
-// ── Tab buttons ───────────────────────────────────────────────────────────────
-document.getElementById('tab-expenses').addEventListener('click',function(){ currentView='expenses'; render(); });
-document.getElementById('tab-summary').addEventListener('click',function(){ currentView='summary'; render(); });
-document.getElementById('tab-convert').addEventListener('click',function(){ currentView='convert'; render(); });
-document.getElementById('trip-switcher-btn').addEventListener('click',function(){ currentView='trips'; render(); });
-document.getElementById('add-expense-btn').addEventListener('click',function(){ openAddExpense(); });
-
-// ── Modal system ──────────────────────────────────────────────────────────────
-function showModal(title, bodyHtml, onReady){
-  var existing=document.getElementById('modal-overlay');
-  if(existing) existing.remove();
-  var ov=document.createElement('div');
-  ov.className='overlay'; ov.id='modal-overlay';
-  ov.innerHTML='<div class="modal"><div class="modal-header"><span class="modal-title">'+title+'</span><button class="modal-close" id="modal-close-btn">×</button></div><div id="modal-body">'+bodyHtml+'</div></div>';
-  document.body.appendChild(ov);
-  ov.addEventListener('click',function(e){ if(e.target===ov) closeModal(); });
-  document.getElementById('modal-close-btn').addEventListener('click', closeModal);
-  if(onReady) onReady();
-}
-
-function closeModal(){
-  var ov=document.getElementById('modal-overlay');
-  if(ov) ov.remove();
-}
-
-// ── Expense forms ─────────────────────────────────────────────────────────────
-function expenseFormHtml(init){
-  var catOpts=CATS.map(function(c){return '<option value="'+c.id+'"'+(init.category===c.id?' selected':'')+'>'+c.icon+' '+c.label+'</option>';}).join('');
-  var curOpts=CURRENCIES.map(function(c){return '<option value="'+c+'"'+(init.currency===c?' selected':'')+'>'+c+'</option>';}).join('');
-  var d=(init.date||today()).split('-');
-  var yr=d[0]||'2026', mo=d[1]||'06', dy=d[2]||'01';
-  var dayOpts=Array.from({length:31},function(_,i){var v=pad(i+1);return '<option value="'+v+'"'+(dy===v?' selected':'')+'>'+( i+1)+'</option>';}).join('');
-  var moOpts=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(function(m,i){var v=pad(i+1);return '<option value="'+v+'"'+(mo===v?' selected':'')+'>'+m+'</option>';}).join('');
-  var yrOpts=['2025','2026','2027'].map(function(y){return '<option value="'+y+'"'+(yr===y?' selected':'')+'>'+y+'</option>';}).join('');
-  return '<div class="fg"><label class="fl">Description *</label><input class="fi" id="f-desc" value="'+esc(init.desc||'')+'" placeholder="e.g. Dinner at rifugio"></div>'
-    +'<div class="frow"><div class="fg"><label class="fl">Amount *</label><input class="fi" id="f-amount" type="number" min="0" step="0.01" value="'+esc(init.amount||'')+'" placeholder="0.00"></div>'
-    +'<div class="fg"><label class="fl">Currency</label><select class="fs" id="f-currency">'+curOpts+'</select></div></div>'
-    +'<div class="fg"><label class="fl">Category</label><select class="fs" id="f-category">'+catOpts+'</select></div>'
-    +'<div class="fg"><label class="fl">Date</label><div class="frow3"><select class="fs" id="f-day">'+dayOpts+'</select><select class="fs" id="f-month">'+moOpts+'</select><select class="fs" id="f-year">'+yrOpts+'</select></div></div>'
-    +'<div class="fg"><label class="fl">Notes</label><input class="fi" id="f-notes" value="'+esc(init.notes||'')+'" placeholder="Optional…"></div>'
-    +'<div class="btn-row"><button class="btn-secondary" id="exp-cancel">Cancel</button><button class="btn-primary" id="exp-save">'+(init.id?'Save changes':'Add expense')+'</button></div>';
-}
-
-function openAddExpense(){
-  var trip=activeTrip();
-  showModal('Add expense', expenseFormHtml({currency:trip.currency,date:today(),category:'food'}), function(){
-    document.getElementById('exp-cancel').addEventListener('click', closeModal);
-    document.getElementById('exp-save').addEventListener('click', function(){
-      var desc=(document.getElementById('f-desc').value||'').trim();
-      var amount=document.getElementById('f-amount').value;
-      if(!desc||!amount){ toast('Please fill in description and amount'); return; }
-      var date=document.getElementById('f-year').value+'-'+document.getElementById('f-month').value+'-'+document.getElementById('f-day').value;
-      expsCol(trip.id).add({
-        desc:desc,
-        amount:parseFloat(amount),
-        currency:document.getElementById('f-currency').value,
-        category:document.getElementById('f-category').value,
-        date:date,
-        notes:(document.getElementById('f-notes').value||'').trim(),
-        createdAt:Date.now()
-      }).then(function(){
-        closeModal();
-        toast('Expense added ✓');
-        refreshExpenses(trip.id);
-      }).catch(function(e){ toast('Error: '+e.message); });
-    });
-  });
-}
-
-function openEditExpense(id){
-  var exp=expenses().find(function(e){return e.id===id;});
-  if(!exp) return;
-  var trip=activeTrip();
-  showModal('Edit expense', expenseFormHtml(exp), function(){
-    document.getElementById('exp-cancel').addEventListener('click', closeModal);
-    document.getElementById('exp-save').addEventListener('click', function(){
-      var desc=(document.getElementById('f-desc').value||'').trim();
-      var amount=document.getElementById('f-amount').value;
-      if(!desc||!amount){ toast('Please fill in description and amount'); return; }
-      var date=document.getElementById('f-year').value+'-'+document.getElementById('f-month').value+'-'+document.getElementById('f-day').value;
-      expsCol(trip.id).doc(id).update({
-        desc:desc,
-        amount:parseFloat(amount),
-        currency:document.getElementById('f-currency').value,
-        category:document.getElementById('f-category').value,
-        date:date,
-        notes:(document.getElementById('f-notes').value||'').trim()
-      }).then(function(){
-        closeModal();
-        toast('Saved ✓');
-        refreshExpenses(trip.id);
-      }).catch(function(e){ toast('Error: '+e.message); });
-    });
-  });
-}
-
-function confirmDeleteExpense(id){
-  showModal('Delete expense?','<p style="color:var(--muted);font-size:14px;margin-bottom:20px">This will be permanently removed.</p><div class="btn-row"><button class="btn-secondary" id="del-cancel">Cancel</button><button class="btn-primary red" id="del-confirm">Delete</button></div>',function(){
-    document.getElementById('del-cancel').addEventListener('click', closeModal);
-    document.getElementById('del-confirm').addEventListener('click', function(){
-      var trip=activeTrip();
-      expsCol(trip.id).doc(id).delete().then(function(){
-        closeModal(); toast('Deleted'); refreshExpenses(trip.id);
-      });
-    });
-  });
-}
-
-function refreshExpenses(tripId){
-  var trip=trips.find(function(t){return t.id===tripId;});
-  if(!trip) return;
-  expsCol(tripId).get().then(function(snap){
-    trip.expenses=[];
-    snap.forEach(function(d){ trip.expenses.push(Object.assign({id:d.id},d.data())); });
-    render();
-  });
-}
-
-// ── Trip forms ────────────────────────────────────────────────────────────────
-function tripFormHtml(init){
-  var emojiBtns=EMOJIS.map(function(e){return '<button class="emoji-opt'+(init.emoji===e?' sel':'')+'" data-em="'+e+'">'+e+'</button>';}).join('');
-  var curOpts=CURRENCIES.map(function(c){return '<option value="'+c+'"'+(init.currency===c?' selected':'')+'>'+c+'</option>';}).join('');
-  return '<div class="fg"><label class="fl">Emoji</label><div class="emoji-grid" id="emoji-grid">'+emojiBtns+'</div></div>'
-    +'<div class="fg"><label class="fl">Trip name *</label><input class="fi" id="t-name" value="'+esc(init.name||'')+'" placeholder="e.g. Dolomites 2026"></div>'
-    +'<div class="fg"><label class="fl">Destination</label><input class="fi" id="t-dest" value="'+esc(init.destination||'')+'" placeholder="e.g. Italy"></div>'
-    +'<div class="frow"><div class="fg"><label class="fl">Currency</label><select class="fs" id="t-currency">'+curOpts+'</select></div>'
-    +'<div class="fg"><label class="fl">Budget</label><input class="fi" id="t-budget" type="number" min="0" value="'+esc(init.budget||'')+'" placeholder="0.00"></div></div>'
-    +'<div class="btn-row"><button class="btn-secondary" id="trip-cancel">Cancel</button><button class="btn-primary" id="trip-save">'+(init.id?'Save changes':'Create trip')+'</button></div>';
-}
-
-function setupEmojiGrid(selectedEmoji){
-  var grid=document.getElementById('emoji-grid');
-  if(!grid) return selectedEmoji;
-  var current=selectedEmoji;
-  grid.addEventListener('click',function(e){
-    var btn=e.target.closest('[data-em]');
-    if(!btn) return;
-    current=btn.getAttribute('data-em');
-    grid.querySelectorAll('.emoji-opt').forEach(function(b){ b.classList.toggle('sel', b.getAttribute('data-em')===current); });
-  });
-  return {get:function(){return current;}};
-}
-
-function openAddTrip(){
-  showModal('New trip', tripFormHtml({emoji:'✈️',currency:'EUR'}), function(){
-    var emojiRef=setupEmojiGrid('✈️');
-    document.getElementById('trip-cancel').addEventListener('click', closeModal);
-    document.getElementById('trip-save').addEventListener('click', function(){
-      var name=(document.getElementById('t-name').value||'').trim();
-      if(!name){ toast('Please enter a trip name'); return; }
-      var id=uid();
-      tripsCol().doc(id).set({
-        name:name,
-        emoji:emojiRef.get(),
-        destination:(document.getElementById('t-dest').value||'').trim(),
-        currency:document.getElementById('t-currency').value,
-        budget:parseFloat(document.getElementById('t-budget').value)||0,
-        startDate:'',endDate:'',createdAt:Date.now()
-      }).then(function(){
-        activeTripId=id; currentView='expenses';
-        closeModal(); toast('Trip created ✓');
-      });
-    });
-  });
-}
-
-function openEditTrip(){
-  var trip=activeTrip();
-  showModal('Edit trip', tripFormHtml(trip), function(){
-    var emojiRef=setupEmojiGrid(trip.emoji||'✈️');
-    document.getElementById('trip-cancel').addEventListener('click', closeModal);
-    document.getElementById('trip-save').addEventListener('click', function(){
-      var name=(document.getElementById('t-name').value||'').trim();
-      if(!name){ toast('Please enter a trip name'); return; }
-      tripsCol().doc(trip.id).update({
-        name:name,
-        emoji:emojiRef.get(),
-        destination:(document.getElementById('t-dest').value||'').trim(),
-        currency:document.getElementById('t-currency').value,
-        budget:parseFloat(document.getElementById('t-budget').value)||0
-      }).then(function(){
-        closeModal(); toast('Trip updated ✓');
-      });
-    });
-  });
-}
-
-function confirmDeleteTrip(){
-  var trip=activeTrip();
-  showModal('Delete trip?','<p style="color:var(--muted);font-size:14px;margin-bottom:20px">This will permanently delete <strong>'+esc(trip.name)+'</strong> and all its expenses.</p><div class="btn-row"><button class="btn-secondary" id="delt-cancel">Cancel</button><button class="btn-primary red" id="delt-confirm">Delete</button></div>',function(){
-    document.getElementById('delt-cancel').addEventListener('click', closeModal);
-    document.getElementById('delt-confirm').addEventListener('click', function(){
-      expsCol(trip.id).get().then(function(snap){
-        var batch=db.batch();
-        snap.forEach(function(d){ batch.delete(d.ref); });
-        batch.delete(tripsCol().doc(trip.id));
-        return batch.commit();
-      }).then(function(){
-        closeModal(); toast('Trip deleted');
-      });
-    });
-  });
-}
-</script>
 </body>
 </html>
